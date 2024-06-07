@@ -1,6 +1,14 @@
 # AI-Generated Dutch Blog
 
-Project to create a blog which, including the generation of articles using AI, runs entirely in Docker containers on a Raspberry Pi. More than 95% of the code used for this purpose is "written" by AI. 
+Project to create AI-generated blogPosts for a Wordpress site running in Docker containers on a Raspberry Pi. More than 95% of the code used for this project is "written" by AI. 
+
+The docer-compose.yaml creates 3 Docker containers:
+
+1. raspiblog_wordpress_1 to run the Wordpress website
+2. raspiblog_db_1 to run the Wordpress database
+3. raspiblog_python_1 to run the python scripts for generating blogPosts
+
+After building and running the containers, the installation/configuration for the Wordpress site must be done manually via browser. For my personal website [renegeilings.nl](https://renegeilings.nl), I use Thema Janey from [www.themeinprogress.com](https://www.themeinprogress.com/)
 
 Here is how I approach the generation of articles. All steps are automatically performed by AI:
 
@@ -34,14 +42,14 @@ To make the information in my articles more relevant and up-to-date, I am workin
 
 ### Prerequisites
 
-- Docker
 - Raspberry Pi
+- Docker and docker-compose
 
 ### Setup Instructions
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/raspiBlog.git
+   git clone https://github.com/rgeilings/raspiBlog.git
    cd raspiBlog
    ```
 2. **adjust the docker-compose.yaml and  scripts/.env files**
@@ -50,11 +58,10 @@ To make the information in my articles more relevant and up-to-date, I am workin
    cd ./scripts
    vi.env
    ```
-3. Configure Wordpres manually via browser
-4. Build and Run Docker Containers
+3. Build and Run Docker Containers
    ```bash
    docker-compose up -d --build
-   ```
+4. Configure Wordpres manually via browser   ```
 5. Use script postTrendingBlog.sh to generate a blogPost. You can use this script in the crontab
    ```bash
    ./postTrendingBlog.sh
@@ -66,7 +73,7 @@ This project is licensed under the MIT License.
 
 - AI content generation powered by OpenAI
 - Image generation powered by DALL-E 3
-- Hosted on a Raspberry Pi with Docker
+- Hosted on a Raspberry Pi with Docker and Docker-compose
 
 ---
 
