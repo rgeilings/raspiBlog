@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:latest
+    restart: always
+    ports:
+      - 7080:80
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: raspiblogUser
+      WORDPRESS_DB_PASSWORD:raspiblogPassword
+      WORDPRESS_DB_NAME: raspiblogdb
+    volumes:
+      - wordpress_data:/var/www/html
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: raspiblogRootPassword
+      MYSQL_DATABASE: raspiblogdb
+      MYSQL_USER: raspiblog
+      MYSQL_PASSWORD: raspiblogPassword
+    volumes:
+      - db_data:/var/lib/mysql
+
+  python:
+    build: ./python
+    volumes:
+      - ./scripts:/scripts
+    depends_on:
+      - wordpress
+      - db
+
+volumes:
+  wordpress_data:
+  db_data:
+

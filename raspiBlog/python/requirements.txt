@@ -1,0 +1,13 @@
+beautifulsoup4
+bs4
+dateparser
+markdown
+nltk
+numpy
+openai
+python-dotenv
+pytrends
+requests
+sumy
+weaviate-client
+
