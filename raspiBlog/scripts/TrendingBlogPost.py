@@ -142,7 +142,7 @@ def main():
        print(f"Willekeurige foto URL: {image_url}")
     else:
        print("Geen foto's gevonden. Genereren van een AI-afbeelding.")
-       ai_image_prompt = "A realistic photo of Donald Trump"
+       ai_image_prompt = "a futuristic, sleek AI interface with holographic displays, vibrant colors, and floating digital elements. The background features a modern high-tech control room with advanced technology and interactive screens. The overall feel is cutting-edge, innovative, and dynamic."
        image_url = generate_ai_image(ai_image_prompt)
        if image_url:
            print(f"AI gegenereerde foto URL: {image_url}")
