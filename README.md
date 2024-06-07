@@ -1,6 +1,6 @@
 # AI-Generated Dutch Blog
 
-Project to create a blog which, including the generation of articles using AI, runs entirely in Docker containers on a Raspberry Pi. More than 95% of the code used for this purpose is "written" by AI. If you're interested in the code, you can find more detailed explanations on the pages "Data Collection," "Create Blogpost with AI," and "Post Blogpost."
+Project to create a blog which, including the generation of articles using AI, runs entirely in Docker containers on a Raspberry Pi. More than 95% of the code used for this purpose is "written" by AI. 
 
 Here is how I approach the generation of articles. All steps are automatically performed by AI:
 
@@ -74,7 +74,7 @@ Feel free to reach out if you have any questions or feedback. Enjoy exploring th
 
 ---
 
-For more detailed information, visit the specific pages (in Dutch):  "verzamelen data", "maak blogpost met AI" en "post blogpost"
+For more detailed information, visit the specific pages on [renegeilings.nl](https://renegeilings.nl) (in Dutch):  "verzamelen data", "maak blogpost met AI" en "post blogpost"
 
 ---
 
