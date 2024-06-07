@@ -55,7 +55,10 @@ To make the information in my articles more relevant and up-to-date, I am workin
    ```bash
    docker-compose up -d --build
    ```
-
+5. Use script postTrendingBlog.sh to generate a blogPost. You can use this script in the crontab
+   ```bash
+   ./postTrendingBlog.sh
+    ```
 ## License
 This project is licensed under the MIT License.
 
