@@ -2,7 +2,7 @@
 
 Project to create AI-generated blogPosts for a Wordpress site running in Docker containers on a Raspberry Pi. More than 95% of the code used for this project is "written" by AI. 
 
-The docer-compose.yaml creates 3 Docker containers:
+The docker-compose.yaml creates 3 Docker containers:
 
 1. raspiblog_wordpress_1 to run the Wordpress website
 2. raspiblog_db_1 to run the Wordpress database
