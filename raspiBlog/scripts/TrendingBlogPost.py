@@ -6,6 +6,7 @@ import random
 import subprocess
 import locale
 from datetime import datetime
+from openai import OpenAI
 
 from dotenv import load_dotenv
 from pytrends.request import TrendReq
