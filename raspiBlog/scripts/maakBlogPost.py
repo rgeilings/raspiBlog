@@ -19,7 +19,7 @@ load_dotenv()
 nltk.download('punkt')
 
 SUMMARIES_FILE = os.getenv('SUMMARIES_FILE', '/app/summaries.txt')
-OUTPUT_FILE = os.getenv('OUTPUT_FILE', '/app/all_summaries.txt')
+DALLE3_PROMPT = os.getenv('DALLE3_PROMPT', '/app/dall-e_3_prompt.txt')
 BLOG_FILE = os.getenv('BLOG_FILE', '/app/blog_post.txt')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
@@ -176,7 +176,7 @@ def generate_blog_content_per_topic(topic, articles, client):
         prompt += f"### {url}\n{summary}\n"
     response = client.chat.completions.create(
         #model="gpt-3.5-turbo",
-        model="gpt-4",
+        model="gpt-4o",
         messages=[
             {"role": "system", "content": "Je bent een behulpzame assistent."},
             {"role": "user", "content": prompt}
@@ -193,7 +193,7 @@ def generate_blog_content(summaries):
 
 def main():
     # Bestandsnamen
-    files_to_delete = [SUMMARIES_FILE, OUTPUT_FILE, BLOG_FILE ]
+    files_to_delete = [SUMMARIES_FILE, DALLE3_PROMPT, BLOG_FILE ]
 
     # Verwijder de bestanden
     for file in files_to_delete:
@@ -209,14 +209,10 @@ def main():
     
     summaries = read_summaries(SUMMARIES_FILE)
     blog_content = generate_blog_content(summaries)
-    
-    with open(OUTPUT_FILE, 'w', encoding='utf-8') as file:
-        for keyword, articles in summaries.items():
-            file.write(f"### {keyword}\n")
-            for url, summary in articles:
-                file.write(f"Keyword: {keyword}\n")
-                file.write(f"URL: {url}\n")
-                file.write(f"Samenvatting: {summary}\n\n")
+    ai_prompt=summarize_article(blog_content, sentence_count=20)
+    print(f"ai_prompt: {ai_prompt}")
+    with open(DALLE3_PROMPT, 'w', encoding='utf-8') as file:
+      file.write(ai_prompt) 
 
     with open(BLOG_FILE, 'w', encoding='utf-8') as file:
         file.write(blog_content)

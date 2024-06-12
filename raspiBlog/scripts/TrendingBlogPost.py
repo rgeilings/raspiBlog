@@ -7,6 +7,7 @@ import subprocess
 import locale
 from datetime import datetime
 from openai import OpenAI
+from PIL import Image
 
 from dotenv import load_dotenv
 from pytrends.request import TrendReq
@@ -18,19 +19,14 @@ WORDPRESS_USER = os.getenv('WORDPRESS_USER')
 WORDPRESS_APP_PASSWORD = os.getenv('WORDPRESS_APP_PASSWORD')
 WP_BASE = os.getenv('WP_BASE')
 BLOG_FILE = os.getenv('BLOG_FILE', '/app/blog_post.txt')
+BLOG_IMG = os.getenv('BLOG_IMG', '/app/temp_image.jpg')
+DALLE3_PROMPT = os.getenv('DALLE3_PROMPT', '/app/dall-e_3_prompt.txt')
 UNSPLASH_ACCESS_KEY = os.getenv('UNSPLASH_ACCESS_KEY')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 def run_scraper_and_generate_blog():
     result = subprocess.run(['python', '/scripts/maakBlogPost.py'], capture_output=True, text=True)
     print(result.stdout)
-
-def get_trending_topic():
-    pytrends = TrendReq(hl='nl-NL', tz=360)
-    trending_searches_df = pytrends.trending_searches(pn='netherlands')
-    
-    trends = trending_searches_df[0].tolist()[:1]
-    return trends
 
 def search_unsplash_photos(query):
     url = f"https://api.unsplash.com/search/photos?page=1&query={query}&client_id={UNSPLASH_ACCESS_KEY}"
@@ -59,7 +55,7 @@ def generate_ai_image(prompt):
        response = client.images.generate(
          model="dall-e-3",
          prompt=prompt,
-         size="1024x1024",
+         size="1792x1024",
          quality="standard",
          n=1,
        )
@@ -70,11 +66,19 @@ def generate_ai_image(prompt):
         print(f"Error generating AI image: {e}")
         return None
 
-def download_image(image_url, filename):
-    image_data = requests.get(image_url).content
-    with open(filename, 'wb') as handler:
-        handler.write(image_data)
-    return filename
+def download_and_resize_image(url, filename):
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(filename, 'wb') as f:
+            f.write(response.content)
+
+        image = Image.open(filename)
+        new_image = image.resize((1792,1024), Image.Resampling.BICUBIC)
+
+        new_image.save(filename,'JPEG')
+
+    else:
+        print(f"Failed to download the image: {response.status_code}")
 
 def upload_image_to_wordpress(filename):
     auth = base64.b64encode(f"{WORDPRESS_USER}:{WORDPRESS_APP_PASSWORD}".encode()).decode()
@@ -91,14 +95,16 @@ def upload_image_to_wordpress(filename):
         raise Exception(f"Error uploading image: {media_response.status_code}, {media_response.text}")
 
     media_id = media_response.json()['id']
-    return media_id    
+    return media_id
 
 def post_to_wordpress(title, content, image_url):
     auth = base64.b64encode(f"{WORDPRESS_USER}:{WORDPRESS_APP_PASSWORD}".encode()).decode()
     post_url = f"{WP_BASE}/wp-json/wp/v2/posts"
 
     try:
-        filename = download_image(image_url, "temp_image.jpg")
+        filename= BLOG_IMG 
+        download_and_resize_image(image_url, filename)
+        print(f"filename:{filename}")
         media_id = upload_image_to_wordpress(filename)
     except Exception as e:
         print(f"Failed to upload image: {e}")
@@ -132,23 +138,22 @@ def generate_title():
 def main():
     locale.setlocale(locale.LC_TIME, 'nl_NL.UTF-8')
     run_scraper_and_generate_blog()
-    trending_topic = get_trending_topic()
     
-    # Lees de inhoud van blog_post.txt
+    # Lees de inhoud van BLOG_FILE
     with open(BLOG_FILE, 'r', encoding='utf-8') as file:
         content = file.read()
     
-    image_url = get_random_photo_url(trending_topic[0])  # Gebruik eerste trending_topic voor de afbeelding
+    # Lees de inhoud van DALLE3_PROMPT
+    with open(DALLE3_PROMPT, 'r', encoding='utf-8') as dalle_prompt:
+        dall_e_prompt = dalle_prompt.read()
+
+    ai_image_prompt =  f"Gebruik de samenvatting van blogpost als inspiratie voor een afbeelding:{dall_e_prompt}" 
+    print(f"ai_image_prompt: {ai_image_prompt}")
+    image_url = generate_ai_image(ai_image_prompt)
     if image_url:
-       print(f"Willekeurige foto URL: {image_url}")
+         print(f"AI gegenereerde foto URL: {image_url}")
     else:
-       print("Geen foto's gevonden. Genereren van een AI-afbeelding.")
-       ai_image_prompt = "A highly detailed and futuristic representation of artificial intelligence."
-       image_url = generate_ai_image(ai_image_prompt)
-       if image_url:
-           print(f"AI gegenereerde foto URL: {image_url}")
-       else:
-           print("Er is een fout opgetreden bij het genereren van een AI-afbeelding.")    
+        print("Er is een fout opgetreden bij het genereren van een AI-afbeelding.")    
 
     title = generate_title()
 
@@ -160,4 +165,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
