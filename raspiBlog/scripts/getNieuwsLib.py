@@ -4,11 +4,9 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from pgdbActions import *  # Importeer alle functies uit pgdbActions
 import json
-import locale
 import random
 import re
 import requests
-import time
 
 # Laad omgevingsvariabelen uit .env bestand
 load_dotenv()

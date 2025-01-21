@@ -1,13 +1,9 @@
+Pillow
 beautifulsoup4
-bs4
-dateparser
+datetime
+dotenv
 markdown
-nltk
-numpy
 openai
-python-dotenv
+psycopg2
 pytrends
 requests
-sumy
-weaviate-client
-

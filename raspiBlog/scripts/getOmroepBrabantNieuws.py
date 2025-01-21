@@ -2,12 +2,10 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import requests
 import re
-import locale
 from pgdbActions import *  # Importeer alle functies uit pgdbActions
 from getNieuwsLib import * # Importeer alle functies uit getNieuwsLib
 import json
 import random
-import time
 
 def parse_relative_time(time_str):
     now = datetime.now()

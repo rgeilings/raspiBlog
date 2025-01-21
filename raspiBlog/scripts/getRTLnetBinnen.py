@@ -4,7 +4,6 @@ import requests
 import random
 import time
 import re
-import locale
 from pgdbActions import *  # Importeer alle functies uit pgdbActions
 from getNieuwsLib import * # Importeer alle functies uit getNieuwsLib
 import json
