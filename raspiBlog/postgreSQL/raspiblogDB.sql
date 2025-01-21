@@ -29,10 +29,16 @@ CREATE ROLE raspiblog WITH
   BYPASSRLS
   PASSWORD 'YOUR_PASSWORD_HERE';
 
+CREATE SEQUENCE IF NOT EXISTS public.rb_runs_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
 
 -- Table: public.rb_runs
 
--- DROP TABLE IF EXISTS public.rb_runs;
+DROP TABLE IF EXISTS public.rb_runs CASCADE;
 
 CREATE TABLE IF NOT EXISTS public.rb_runs
 (
@@ -43,15 +49,27 @@ CREATE TABLE IF NOT EXISTS public.rb_runs
     type character varying(2) COLLATE pg_catalog."default",
     CONSTRAINT rb_runs_pkey PRIMARY KEY (id)
 )
-
 TABLESPACE pg_default;
+
+ALTER SEQUENCE public.rb_runs_id_seq
+    OWNED BY public.rb_runs.id;
+
+ALTER SEQUENCE public.rb_runs_id_seq
+    OWNER TO raspiblog;
 
 ALTER TABLE IF EXISTS public.rb_runs
     OWNER to raspiblog;
 
 -- Table: public.rb_articles
 
--- DROP TABLE IF EXISTS public.rb_articles;
+DROP TABLE IF EXISTS public.rb_articles CASCADE;
+
+CREATE SEQUENCE IF NOT EXISTS public.rb_articles_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
 
 CREATE TABLE IF NOT EXISTS public.rb_articles
 (
@@ -72,10 +90,16 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.rb_articles
     OWNER to raspiblog;
-	
+
+ALTER SEQUENCE public.rb_articles_id_seq
+    OWNED BY public.rb_articles.id;
+
+ALTER SEQUENCE public.rb_articles_id_seq
+    OWNER TO raspiblog;
+
 -- View: public.rb_v_entertainment_articles
 
--- DROP VIEW public.rb_v_entertainment_articles;
+DROP VIEW public.rb_v_entertainment_articles;
 
 CREATE OR REPLACE VIEW public.rb_v_entertainment_articles
  AS
@@ -98,7 +122,7 @@ ALTER TABLE public.rb_v_entertainment_articles
 
 -- View: public.rb_v_sport_articles
 
--- DROP VIEW public.rb_v_sport_articles;
+DROP VIEW public.rb_v_sport_articles;
 
 CREATE OR REPLACE VIEW public.rb_v_sport_articles
  AS
@@ -118,6 +142,3 @@ CREATE OR REPLACE VIEW public.rb_v_sport_articles
 
 ALTER TABLE public.rb_v_sport_articles
     OWNER TO raspiblog;
-
-
-	
