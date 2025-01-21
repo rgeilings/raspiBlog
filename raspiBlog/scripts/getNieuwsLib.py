@@ -7,6 +7,7 @@ import json
 import random
 import re
 import requests
+import locale
 
 # Laad omgevingsvariabelen uit .env bestand
 load_dotenv()
