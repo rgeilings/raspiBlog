@@ -1,4 +1,5 @@
 import os
+import sys
 import base64
 import requests
 import markdown
@@ -25,29 +26,8 @@ UNSPLASH_ACCESS_KEY = os.getenv('UNSPLASH_ACCESS_KEY')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 def run_scraper_and_generate_blog():
-    result = subprocess.run(['python', '/scripts/maakBlogPost.py'], capture_output=True, text=True)
+    result = subprocess.run(['python', '/scripts/maakBlogPostPG.py'], capture_output=True, text=True)
     print(result.stdout)
-
-def search_unsplash_photos(query):
-    url = f"https://api.unsplash.com/search/photos?page=1&query={query}&client_id={UNSPLASH_ACCESS_KEY}"
-    
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Controleer of het verzoek succesvol was
-        data = response.json()
-        return data
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching data from Unsplash: {e}")
-        return None
-
-def get_random_photo_url(query):
-    photos_data = search_unsplash_photos(query)
-    if photos_data and 'results' in photos_data:
-        photos = photos_data['results']
-        if photos:
-            random_photo = random.choice(photos)  # Kies een willekeurige foto
-            return random_photo['urls']['regular']  # Retourneer de URL van de willekeurige foto
-    return None
 
 def generate_ai_image(prompt):
     try:
@@ -69,13 +49,23 @@ def generate_ai_image(prompt):
 def download_and_resize_image(url, filename):
     response = requests.get(url)
     if response.status_code == 200:
+        # Genereer de bestandsnaam met de huidige datum en tijd
+        now = datetime.now()
+        filename = now.strftime("temp_image_%Y%m%d_%H%M%S.jpg")
+        
+        # Sla de originele afbeelding op met de gegenereerde bestandsnaam
         with open(filename, 'wb') as f:
             f.write(response.content)
+        print(f"Originele afbeelding opgeslagen als: {filename}")
 
+        # Open en resize de afbeelding
         image = Image.open(filename)
-        new_image = image.resize((1792,1024), Image.Resampling.BICUBIC)
+        new_image = image.resize((1792, 1024), Image.Resampling.BICUBIC)
 
-        new_image.save(filename,'JPEG')
+        # Sla de resized afbeelding op als temp_image.jpg
+        temp_filename = 'temp_image.jpg'
+        new_image.save(temp_filename, 'JPEG')
+        print(f"Geresizeerde afbeelding opgeslagen als: {temp_filename}")
 
     else:
         print(f"Failed to download the image: {response.status_code}")
@@ -130,40 +120,51 @@ def post_to_wordpress(title, content, image_url):
     if post_response.status_code != 201:
         raise Exception(f"Error creating post: {post_response.status_code}, {post_response.text}")
 
-def generate_title():
+def generate_title(NieuwsType):
     now = datetime.now()
-    title = now.strftime("Trending %A %d %B, %Y %H:%M")
+    if 'LEEG' in NieuwsType:
+        title = now.strftime("Nieuws %A %d %B, %Y %H:%M")
+    else:
+        title = now.strftime(f"{NieuwsType} Nieuws %A %d %B, %Y %H:%M")
     return title
 
-def main():
+def main(NieuwsType):
     locale.setlocale(locale.LC_TIME, 'nl_NL.UTF-8')
-    run_scraper_and_generate_blog()
+    #run_scraper_and_generate_blog()
     
     # Lees de inhoud van BLOG_FILE
     with open(BLOG_FILE, 'r', encoding='utf-8') as file:
         content = file.read()
     
-    # Lees de inhoud van DALLE3_PROMPT
-    with open(DALLE3_PROMPT, 'r', encoding='utf-8') as dalle_prompt:
-        dall_e_prompt = dalle_prompt.read()
+    # controleer of het bestand niet leeg is
+    if os.path.getsize(BLOG_FILE) != 0:
+      # Lees de inhoud van DALLE3_PROMPT
+      with open(DALLE3_PROMPT, 'r', encoding='utf-8') as dalle_prompt:
+          dall_e_prompt = dalle_prompt.read()
 
-    ai_image_prompt =  f"Gebruik de samenvatting van blogpost als inspiratie voor een afbeelding:{dall_e_prompt}" 
-    print(f"ai_image_prompt: {ai_image_prompt}")
-    image_url = generate_ai_image(ai_image_prompt)
-    if image_url:
-         print(f"AI gegenereerde foto URL: {image_url}")
+      ai_image_prompt =  f"Gebruik de samenvatting van blogpost als inspiratie voor een afbeelding. Vervang eventuele namen in samenvatting door een beschrijving van soortgelijke personen:{dall_e_prompt}" 
+      print(f"ai_image_prompt: {ai_image_prompt}")
+      image_url = generate_ai_image(ai_image_prompt)
+      if image_url:
+           print(f"AI gegenereerde foto URL: {image_url}")
+      else:
+          print("Er is een fout opgetreden bij het genereren van een AI-afbeelding.")    
+
+      title = generate_title(NieuwsType)
+
+      # Converteer de gegenereerde Markdown content naar HTML
+      html_content = markdown.markdown(content)
+
+      # Plaats de inhoud naar WordPress  
+      post_to_wordpress(title, html_content, image_url)
     else:
-        print("Er is een fout opgetreden bij het genereren van een AI-afbeelding.")    
-
-    title = generate_title()
-
-    # Converteer de gegenereerde Markdown content naar HTML
-    html_content = markdown.markdown(content)
-
-    # Plaats de inhoud naar WordPress  
-    post_to_wordpress(title, html_content, image_url)
+      print("BLOG_FILE is leeg")
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) != 2:
+        print("Geen parameter meegegeven, dus geen Brabants Nieuws.")
+        NieuwsType='LEEG'
+    else:
+        NieuwsType = sys.argv[1]
 
-
+    main(NieuwsType)
