@@ -49,7 +49,8 @@ def generate_summaries():
                     """
                     SELECT topic as label, url, text as summary
                     FROM rb_v_entertainment_articles
-                    ORDER by pub_date desc;
+                    ORDER by RANDOM()
+                    LIMIT 6;
                     """
                 )
                 rows = cursor.fetchall()
@@ -86,8 +87,9 @@ def main():
     summaries = read_summaries(SUMMARIES_FILE)
     client = OpenAI(api_key=OPENAI_API_KEY)
     blog_content = generate_blog_content(client, summaries)
-    blog_samenvatting = maak_summary(blog_content)
-    ai_prompt = maak_DALLE3_PROMPT(client, blog_samenvatting)
+    #blog_samenvatting = maak_summary(blog_content)
+    #ai_prompt = maak_DALLE3_PROMPT(client, blog_samenvatting)
+    ai_prompt = maak_DALLE3_PROMPT(client, blog_content)
     print(f"ai_prompt: {ai_prompt}")
     with open(DALLE3_PROMPT, 'w', encoding='utf-8') as file:
       file.write(ai_prompt) 

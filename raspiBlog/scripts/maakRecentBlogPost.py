@@ -21,7 +21,7 @@ def update_run_status():
                     UPDATE rb_runs r
                     SET status = 'C'
                     WHERE r.id IN (
-                        SELECT run_id from rb_v_sport_articles
+                        SELECT run_id from rb_v_recent_articles
                     );
                 """)
 
@@ -30,7 +30,7 @@ def update_run_status():
                     UPDATE rb_articles
                     SET status = 'V' 
                     WHERE id IN (
-                        SELECT id from rb_v_sport_articles
+                        SELECT id from rb_v_recent_articles
                     );
                 """)
 
@@ -48,7 +48,7 @@ def generate_summaries():
                 cursor.execute(
                     """
                     SELECT topic as label, url, text as summary
-                    FROM rb_v_sport_articles
+                    FROM rb_v_recent_articles
                     ORDER by RANDOM()
                     LIMIT 6;
                     """
@@ -87,8 +87,6 @@ def main():
     summaries = read_summaries(SUMMARIES_FILE)
     client = OpenAI(api_key=OPENAI_API_KEY)
     blog_content = generate_blog_content(client, summaries)
-    #blog_samenvatting = maak_summary(blog_content)
-    #ai_prompt = maak_DALLE3_PROMPT(client, blog_samenvatting)
     ai_prompt = maak_DALLE3_PROMPT(client, blog_content)
     print(f"ai_prompt: {ai_prompt}")
     with open(DALLE3_PROMPT, 'w', encoding='utf-8') as file:

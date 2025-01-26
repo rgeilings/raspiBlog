@@ -2,10 +2,12 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import requests
 import re
+import locale
 from pgdbActions import *  # Importeer alle functies uit pgdbActions
 from getNieuwsLib import * # Importeer alle functies uit getNieuwsLib
 import json
 import random
+import time
 
 def parse_relative_time(time_str):
     now = datetime.now()
@@ -151,6 +153,6 @@ def main():
     for article in sorted_articles:
         print(f"URL: {article['url']}, Tijd: {article['publication_time']}")
         get_articles(article['url'], article['publication_time'], runid)
-
+    update_run_status(runid)
 if __name__ == "__main__":
     main()
