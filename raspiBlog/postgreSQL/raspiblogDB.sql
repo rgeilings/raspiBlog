@@ -142,3 +142,27 @@ CREATE OR REPLACE VIEW public.rb_v_sport_articles
 
 ALTER TABLE public.rb_v_sport_articles
     OWNER TO raspiblog;
+
+-- View: public.rb_v_recent_articles
+
+-- DROP VIEW public.rb_v_recent_articles;
+
+CREATE OR REPLACE VIEW public.rb_v_recent_articles
+ AS
+ SELECT a.id,
+    a.run_id,
+    a.url,
+    a.topic,
+    a.summary,
+    a.text,
+    a.pub_date,
+    a.title,
+    r.start_datetime
+   FROM rb_articles a
+     JOIN rb_runs r ON a.run_id = r.id
+  WHERE a.status IS NULL AND a.title !~~ 'Wekdienst%'::text AND date(a.pub_date) = CURRENT_DATE AND (a.url::text ~~ 'https://rtlnieuws.nl/nieuws/%'::text AND a.url::text !~~ 'https://rtlnieuws.nl/nieuws/sport/%'::text OR a.url::text ~~ 'https://nos.nl%'::text OR a.url::text ~~ 'https://www.omroepbrabant.nl%'::text)
+  ORDER BY a.pub_date DESC;
+
+ALTER TABLE public.rb_v_recent_articles
+    OWNER TO raspiblog;
+
