@@ -4,6 +4,7 @@ import requests
 import random
 import time
 import re
+import locale
 from pgdbActions import *  # Importeer alle functies uit pgdbActions
 from getNieuwsLib import * # Importeer alle functies uit getNieuwsLib
 import json
@@ -184,21 +185,6 @@ def get_articles(article_url, runid):
         time.sleep(wait_time)
     else:
         print(f"Error fetching page: {response.status_code}")        
-
-def update_run_status(run_id):
-    try:
-        with connect(database=database, user=username, password=password, host=host, port=port) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    UPDATE rb_runs
-                    SET status = 'V'
-                    WHERE status = 'S' AND id = %s;
-                """, (run_id,))
-                conn.commit()
-                print(f"Status van run_id {run_id} bijgewerkt naar 'V'.")
-    except Exception as e:
-        print(f"Er is een fout opgetreden bij het bijwerken van de run-status: {e}")
-        sys.exit(1)
 
 def main():
     locale.setlocale(locale.LC_TIME, 'nl_NL.UTF-8')

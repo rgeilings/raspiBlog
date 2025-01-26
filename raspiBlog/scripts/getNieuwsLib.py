@@ -4,10 +4,11 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from pgdbActions import *  # Importeer alle functies uit pgdbActions
 import json
+import locale
 import random
 import re
 import requests
-import locale
+import time
 
 # Laad omgevingsvariabelen uit .env bestand
 load_dotenv()
@@ -249,26 +250,19 @@ def generate_blog_content(client, summaries):
         blog_content += generate_blog_content_per_topic(topic, articles, client) + "\n"
     return blog_content
 
-def generate_blog_content_per_topic_oud(topic, articles, client):
-    prompt = f"Maak een blogpost op basis van de volgende samenvattingen voor het onderwerp '{topic}'. Voeg headers en opmaak toe,\n"
-    prompt += "maar verzin geen extra inhoud en geen urls. Herschrijf de samenvatting naar een informele stijl. Zorg ervoor dat er geen plagiaat veroorzaakt wordt.\n"
-    prompt += "Als je een datum wil gebruiken, gebruik dan alleen datums die expliciet zijn genoemd. Herschrijf eventueel {topic} als dit niet bij het article past. \n"
-    prompt += "Gebruik de volgende structuur:\n"
-    prompt += f"\n## onderwerp van article \n"
-    for url, summary in articles:
-        prompt += f"{summary}\n"
-    response = client.chat.completions.create(
-        model= GBPCPTMODEL,
-        messages=[
-            {"role": "system", "content": "Je bent een behulpzame assistent."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return response.choices[0].message.content
+def update_run_status(run_id):
+    try:
+        with connect(database=database, user=username, password=password, host=host, port=port) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE rb_runs
+                    SET status = 'V'
+                    WHERE status = 'S' AND id = %s;
+                """, (run_id,))
+                conn.commit()
+                print(f"Status van run_id {run_id} bijgewerkt naar 'V'.")
+    except Exception as e:
+        print(f"Er is een fout opgetreden bij het bijwerken van de run-status: {e}")
+        sys.exit(1)
 
-def generate_blog_content_oud(client, summaries):
-    blog_content = ""
-    for topic, articles in summaries.items():
-        blog_content += generate_blog_content_per_topic(topic, articles, client) + "\n"
-    return blog_content
 
