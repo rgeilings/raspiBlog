@@ -31,20 +31,22 @@ def run_scraper_and_generate_blog():
 
 def generate_ai_image(prompt):
     try:
-       client = OpenAI(api_key=OPENAI_API_KEY)
-       response = client.images.generate(
-         model="dall-e-3",
-         prompt=prompt,
-         size="1792x1024",
-         quality="standard",
-         n=1,
-       )
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            size="1792x1024",
+            quality="standard",
+            n=1,
+        )
 
-       image_url = response.data[0].url
-       return image_url
+        image_url = response.data[0].url
+        return image_url
     except Exception as e:
         print(f"Error generating AI image: {e}")
-        return None
+        # Gebruik fallback-afbeelding
+        fallback_url = "https://renegeilings.nl/wp-content/uploads/2025/01/temp_image-128.jpg"
+        return fallback_url
 
 def download_and_resize_image(url, filename):
     response = requests.get(url)
