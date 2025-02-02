@@ -1,15 +1,4 @@
-from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
-import requests
-import random
-import time
-import re
-import locale
-from pgdbActions import *  # Importeer alle functies uit pgdbActions
-from getNieuwsLib import * # Importeer alle functies uit getNieuwsLib
-import json
-from urllib.parse import urljoin
-
+from raspiBlogLib import * # Importeer alle functies uit raspiBlogLib
 
 def parse_relative_time(time_str):
     now = datetime.now()
@@ -157,22 +146,22 @@ def get_articles(article_url, runid):
             if publication_time.date() == datetime.today().date():
 
                 # Maak samenvatting voor blogpost
-                summary = maak_summary(all_scraped_text)
+                #summary = maak_summary(all_scraped_text)
+                summary = ''
 
                 # Stel aanvullende gegevens in
                 article_row = {}
                 set_run_id(article_row, runid)
                 set_full_url(article_row, url)
-                #if 'Titel niet gevonden.' not in title:
-                topic = bepaal_topic(title)
-                #else:
-                #    topic = bepaal_topic(all_scraped_text)
+                #topic = bepaal_topic(title)
+                topic = ''
                 set_topic(article_row, topic)
                 set_pub_date(article_row, publication_time)
                 set_text(article_row, all_scraped_text)
                 set_summary(article_row, summary)
                 set_title(article_row, title)
-
+                supply_channel = ''
+                set_supply_channel(article_row, supply_channel)                                   
                 # Voeg artikel toe aan de database
                 article_id = insert_article(article_row)
                 clear_article_row(article_row)
@@ -191,7 +180,7 @@ def main():
     #
     # Gebruik de add_new_row functie uit pgdbActions.py
     start_datetime = datetime.now()
-    runid = add_new_row(start_datetime,'C')
+    runid = add_new_row_rb_runs(start_datetime,'C', Path(sys.argv[0]).stem)
     print(f"runid {runid}")
     # Basis URL voor artikellinks
     base_url = "https://rtlnieuws.nl/net-binnen"

@@ -80,13 +80,54 @@ def extract_article_data(base_url):
         soup = BeautifulSoup(response.text, 'html.parser')
         articles = []
 
-        pattern = re.compile(r"^/artikel/\d+-laatste-nieuws$")
+        # Patroon aangepast voor relatieve URL-paden
+        pattern = re.compile(r"^/artikel/\d+[-\w]+$")
+        #print(f"pattern: {pattern}")
 
         for element in soup.find_all('a', href=True):
             href = element['href']
+            #print(f"href: {href}")
             if pattern.match(href):
+                # Correcte samenstelling van de volledige URL
+                base_url = 'https://nos.nl/'
                 article_url = f"{base_url.rstrip('/')}{href}"
+                print(f"article_url: {article_url}")
+                
+                # Controleer of de URL al bestaat
+                if url_exists(article_url):
+                    print(f"article_url already exists in database: {article_url}")
+                    continue
 
+                time_tag = element.find_next('time', {'datetime': True})
+                publication_time = time_tag['datetime'] if time_tag else 'N/A'
+
+                articles.append({
+                    'url': article_url,
+                    'publication_time': publication_time
+                })
+
+        return articles
+    else:
+        raise Exception(f"Error fetching page: {response.status_code}")
+
+def extract_article_data_oud(base_url):
+    response = requests.get(base_url)
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        articles = []
+
+        #pattern = re.compile(r"^/artikel/\d+-laatste-nieuws$")
+        pattern = re.compile(r"^https://nos\.nl/artikel/\d+[-\w]+$")
+        print(f"pattern: {pattern}")
+
+        for element in soup.find_all('a', href=True):
+            href = element['href']
+            print(f"href: {href}")
+            if pattern.match(href):
+                base_url = 'https://nos.nl/'
+                article_url = f"{base_url.rstrip('/')}{href}"
+                print(f"article_url: {article_url}")
                 # Controleer of de URL al bestaat (eventueel met een functie zoals url_exists)
                 if url_exists(article_url):
                     print(f"article_url already exists in database: {article_url}")
@@ -135,6 +176,8 @@ def get_articles(article_url, publication_time, runid, delay=10):
         publication_time = datetime.strptime(publication_time, "%Y-%m-%dT%H:%M:%S%z")
 
         # Vergelijk de datum
+        publicatie_datum = publication_time.date()
+        print (f"publicatie_datum: {publicatie_datum}") 
         if publication_time.date() == datetime.today().date():
 
             # Maak samenvatting voor blogpost
@@ -152,7 +195,7 @@ def get_articles(article_url, publication_time, runid, delay=10):
             set_text(article_row, all_scraped_text)
             set_summary(article_row, summary)
             set_title(article_row, title)
-            supply_channel = get_supply_channel_name(url)
+            supply_channel = 'Entertainment'
             set_supply_channel(article_row, supply_channel)
             print(f"supply_channel:{supply_channel}")
 
@@ -171,10 +214,9 @@ def main():
     # Gebruik de add_new_row functie uit pgdbActions.py
     start_datetime = datetime.now()
     runid = add_new_row_rb_runs(start_datetime,'C', Path(sys.argv[0]).stem)
-
     print(f"runid {runid}")
     # Haal het laatste nieuws van nos.nl 
-    base_url = "https://nos.nl"
+    base_url = "https://nos.nl/nieuws/cultuur-en-media"
     article_data = extract_article_data(base_url)
 
     # Sorteer de artikelen op basis van publication_time, meest recent eerst

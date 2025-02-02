@@ -133,18 +133,19 @@ def get_articles(article_url, publication_time, runid, delay=10):
     if publication_time.date() == datetime.today().date():
         # Maak samenvatting voor blogpost
         #summary = maak_summary(all_scraped_text)
-        summary = ''
+        summary=''
         set_run_id(article_row, runid)
         set_full_url(article_row, article_url)
         #topic = bepaal_topic(title)
-        topic = ''
+        topic=''
         set_topic(article_row, topic)
         set_pub_date(article_row, publication_time)
         set_text(article_row, all_scraped_text)
         set_summary(article_row, summary)
         set_title(article_row, title)
-        supply_channel = ''
-        set_supply_channel(article_row, supply_channel)                          
+        supply_channel = 'Sport'
+        set_supply_channel(article_row, supply_channel)
+
         article_id = insert_article(article_row)
         clear_article_row(article_row)
         if article_id is not None:
@@ -158,7 +159,7 @@ def main():
     runid = add_new_row_rb_runs(start_datetime,'C', Path(sys.argv[0]).stem)
     print(f"runid {runid}")
     # Haal artikelen op van omroepbrabant.nl
-    url = 'http://omroepbrabant.nl/netbinnen'
+    url = 'http://omroepbrabant.nl/sport'
     article_data = extract_article_data(url)
 
     # Sorteer de artikelen op basis van publication_time, meest recent eerst

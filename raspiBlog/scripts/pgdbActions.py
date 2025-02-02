@@ -30,7 +30,17 @@ def add_new_row(start_datetime,type):
     conn.commit()
     return new_id
 
+def add_new_row_rb_runs(start_datetime,type, action):
+    cur.execute("INSERT INTO rb_runs (start_datetime, status, type, action) VALUES (%s, %s, %s, %s) RETURNING id", (start_datetime, 'S', type, action))
+    new_id = cur.fetchone()[0]  # Gebruik tuple index in plaats van dictionary key
+    conn.commit()
+    return new_id
+
 # Update een bestaande rij in de tabel rb_runs
+def update_row_rb_runs(id, end_datetime, status, action, ai_provider):
+    cur.execute("UPDATE rb_runs SET end_datetime = %s, status = %s, action = %s, ai_provider = %s WHERE id = %s", (end_datetime, status, id))
+    conn.commit()
+
 def update_row(id, end_datetime, status):
     cur.execute("UPDATE rb_runs SET end_datetime = %s, status = %s WHERE id = %s", (end_datetime, status, id))
     conn.commit()
@@ -55,9 +65,9 @@ def get_first_trends(run_id):
 def insert_article(row):
     try:
         cur.execute("""
-            INSERT INTO rb_articles (run_id, url, topic, summary, text, pub_date, title)
-            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-        """, (row["run_id"], row["full_url"], row["topic"], row["summary"], row["text"], row["pub_date"] , row["title"]))
+            INSERT INTO rb_articles (run_id, url, topic, summary, text, pub_date, title, supply_channel)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+        """, (row["run_id"], row["full_url"], row["topic"], row["summary"], row["text"], row["pub_date"] , row["title"], row["supply_channel"]))
         row_id = cur.fetchone()[0]
         conn.commit()
         return row_id
