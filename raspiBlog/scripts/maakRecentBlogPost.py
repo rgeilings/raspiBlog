@@ -87,7 +87,6 @@ def main():
     generate_summaries()
     summaries = read_summaries(SUMMARIES_FILE)
     client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_API_URL)
-    prompt = "Hallo"
     try:
        AI_provider = 'DeepSeek'
        print(AI_provider)
