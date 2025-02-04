@@ -2,11 +2,12 @@
 
 Project to create AI-generated blogPosts for a Wordpress site running in Docker containers on a Raspberry Pi. More than 95% of the code used for this project is "written" by AI. 
 
-The docker-compose.yaml creates 3 Docker containers:
+The docker-compose.yaml creates 4 Docker containers:
 
 1. raspiblog_wordpress_1 to run the Wordpress website
 2. raspiblog_db_1 to run the Wordpress database
 3. raspiblog_python_1 to run the python scripts for generating blogPosts
+4. raspiblog_pg_1 to run the postgreSQL database for storing raspiBlog articles and stats
 
 After building and running the containers, the installation/configuration for the Wordpress site must be done manually via browser. For my personal website [renegeilings.nl](https://renegeilings.nl), I use Thema Janey from [www.themeinprogress.com](https://www.themeinprogress.com/)
 
@@ -14,29 +15,23 @@ Here is how I approach the generation of articles. All steps are automatically p
 
 ## Step-by-Step Process
 
-### Step 1: Check Trending Topics
-Several times a day, the AI bot starts by searching for the top 6 trending topics from Google Trends in the Netherlands. This keeps me informed about what's happening and what people are talking about.
+### Step 1: Check 3 Dutch news sites
+Several times a day, the AI bot starts by 'reading' rtlniews.nl, NOS.nl and omroepbrabant.nl for latest news, sports news and entertainment news. This keeps me informed about what's happening and what people are talking about.
 
 ### Step 2: Scrape Articles
-For each trending topic, the AI bot searches for Dutch articles on various news sites. A bit of scraping brings together a lot of interesting pieces.
+For each latest news, sports news and entertainment news, the AI bot reads these Dutch articles. A bit of scraping brings together a lot of interesting pieces. This is stored in the postreSQL database.
 
-### Step 3: Summarize Articles
-The AI bot creates a short, powerful summary for each article. These summaries are combined into one concise piece that you can quickly read.
+### Step 3: Create Summary for 6 random articles
+Several times a day, the AI bot choose random 6 articles for latest news, sports news or entertainment news and write a summary for thes 6 articles.
 
-### Step 4: Find Images
-For the first trending topic, the AI bot looks for a beautiful, free photo. If that doesn't work, the AI bot asks DALL-E 3 to create a cool AI-generated image. This way, there's always something nice to accompany the article.
+### Step 4: Create AI Image
+From this summary, the AI bot creates a DALL-E3 prompt to generate a image which reflects the summary. This way, there's always something nice to accompany the article.
 
 ### Step 5: Create Blogpost
 With the summary and the image, the AI bot creates a complete blog post. This piece is then ready for publication.
 
 ### Step 6: Publish on renegeilings.nl
 The blog post is automatically published on my site, [renegeilings.nl](https://renegeilings.nl), in the category "gegenereerd met AI." This ensures there's something new and interesting on my blog every day.
-
-## Current Challenges
-
-At the moment, the articles are not always accurate, and the AI sometimes misinterprets the context of the trending topics. To fetch recent information, I use web scraping techniques, which I have not yet fully mastered. This can also lead to confusion or incorrect information.
-
-To make the information in my articles more relevant and up-to-date, I am working on refining my scraping techniques. This will allow me to collect recent articles (no older than one day) from various sources and enhance them using Retrieval-Augmented Generation (RAG). This way, I can provide the most up-to-date information on trending topics in the Netherlands.
 
 ## How to Run the Project
 
@@ -62,7 +57,7 @@ To make the information in my articles more relevant and up-to-date, I am workin
    ```bash
    docker-compose up -d --build
 4. Configure Wordpres manually via browser   ```
-5. Use script postTrendingBlog.sh to generate a blogPost. You can use this script in the crontab
+5. Use the postLaatsteXXXXXXX.sh scripta to generate a blogPost. You can use this scripts in the crontab
    ```bash
    ./postTrendingBlog.sh
     ```
