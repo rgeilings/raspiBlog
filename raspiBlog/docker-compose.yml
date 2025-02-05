@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   wordpress:
     image: wordpress:latest
@@ -35,7 +33,18 @@ services:
       - wordpress
       - db
 
+  pg:
+    image: postgres
+    restart: always
+    ports:
+      - "5532:5432"
+    environment:
+      POSTGRES_USER: raspiblogUser
+      POSTGRES_PASSWORD: raspiblogPassword
+    volumes:
+      - ./postgres/pgdata:/var/lib/postgresql/data
+      - ./postgres/extdata:/var/tmp
+
 volumes:
   wordpress_data:
   db_data:
-
