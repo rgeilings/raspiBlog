@@ -98,7 +98,6 @@ def get_articles(article_url, publication_time, runid, delay=10):
         # Zoek de titel-tag en haal de tekst op
         title_tag = soup.find('title')
         if title_tag:
-            #title = title_tag.text
             title = title_tag.text.replace(" - Omroep Brabant", "") 
             print('Titel van de pagina:', title)
         else:
@@ -116,7 +115,7 @@ def get_articles(article_url, publication_time, runid, delay=10):
             for div in content_divs:
                 scraped_text = div.get_text(separator="\n", strip=True)
                 all_scraped_text += scraped_text + "\n" + "\n"  # Voeg tekst toe en scheid met een nieuwe regel
-                print(scraped_text)
+                #print(scraped_text)
         else:
             print("Geen elementen gevonden met een class die begint met 'content_content'.")
     else:
@@ -129,14 +128,14 @@ def get_articles(article_url, publication_time, runid, delay=10):
 
     # Optioneel: Verwijder overtollige lege regels
     all_scraped_text = re.sub(r"\n\s*\n", "\n", all_scraped_text).strip()
-
+    pubDate = publication_time.date()
+    today = datetime.today().date()
+    print(f">>>>>>>>>>>>>>>>>>>>>>>>pubDate:{pubDate}, today:{today}")
     if publication_time.date() == datetime.today().date():
         # Maak samenvatting voor blogpost
-        #summary = maak_summary(all_scraped_text)
         summary=''
         set_run_id(article_row, runid)
         set_full_url(article_row, article_url)
-        #topic = bepaal_topic(title)
         topic=''
         set_topic(article_row, topic)
         set_pub_date(article_row, publication_time)
@@ -146,6 +145,7 @@ def get_articles(article_url, publication_time, runid, delay=10):
         supply_channel = 'Sport'
         set_supply_channel(article_row, supply_channel)
 
+        print(f">>>>>>>>>>>>>>>>>>>>article_row:{article_row}")
         article_id = insert_article(article_row)
         clear_article_row(article_row)
         if article_id is not None:
@@ -170,7 +170,7 @@ def main():
     for article in sorted_articles:
         print(f"URL: {article['url']}, Tijd: {article['publication_time']}")
         get_articles(article['url'], article['publication_time'], runid)
-    update_run_status(runid)
+    update_run_status(runid, 'none', 'V')
 
 if __name__ == "__main__":
     main()

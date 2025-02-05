@@ -195,7 +195,7 @@ def main():
         full_url = article_link
         print(f"Scraping {full_url}...")
         get_articles(full_url, runid) 
-    update_run_status(runid)
+    update_run_status(runid, 'none', 'V')
 
 if __name__ == "__main__":
     main()

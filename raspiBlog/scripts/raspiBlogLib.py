@@ -1,4 +1,6 @@
+from PIL import Image
 from bs4 import BeautifulSoup
+from datetime import datetime
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -6,14 +8,18 @@ from pathlib import Path
 from pgdbActions import *  # Importeer alle functies uit pgdbActions
 from psycopg2 import connect
 from psycopg2.extras import RealDictCursor
+from urllib.parse import urljoin
+import base64
 import json
 import locale
+import markdown
+import os
 import random
 import re
 import requests
+import subprocess
 import sys
 import time
-from urllib.parse import urljoin
 
 # Laad omgevingsvariabelen uit .env bestand
 load_dotenv()
@@ -191,20 +197,23 @@ def Agenerate_blog_content_per_topic(topic, articles, client, model):
         print(f"Er is een fout opgetreden bij het genereren van blog_content: {e}")
 
 
-def update_run_status(run_id):
-    now = datetime.now()
+def update_run_status(run_id, AI_provider, status):
+    now = datetime.now()  # Correcte manier om de huidige tijd op te halen
+
     try:
+        # Maak een databaseverbinding
         with connect(database=database, user=username, password=password, host=host, port=port) as conn:
             with conn.cursor() as cursor:
+                # Eerste update statement (voor rb_runs)
                 cursor.execute("""
                     UPDATE rb_runs
-                    SET status = 'V', end_datetime = %s
-                    WHERE status = 'S' AND id = %s;
-                """, (now, run_id,))
+                    SET status = %s, ai_provider = %s, end_datetime = %s
+                    WHERE id = %s
+                """, (status, AI_provider, now, run_id))
+
+                # Commit veranderingen
                 conn.commit()
-                print(f"Status van run_id {run_id} bijgewerkt naar 'V'.")
+                print("Statussen zijn succesvol bijgewerkt.")
     except Exception as e:
         print(f"Er is een fout opgetreden bij het bijwerken van de run-status: {e}")
         sys.exit(1)
-
-

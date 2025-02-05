@@ -97,10 +97,6 @@ ALTER SEQUENCE public.rb_articles_id_seq
 ALTER SEQUENCE public.rb_articles_id_seq
     OWNER TO raspiblog;
 
--- View: public.rb_v_recent_articles
-
--- DROP VIEW public.rb_v_recent_articles;
-
 CREATE OR REPLACE VIEW public.rb_v_recent_articles
  AS
  SELECT a.id,
@@ -115,13 +111,6 @@ CREATE OR REPLACE VIEW public.rb_v_recent_articles
   WHERE a.status IS NULL AND a.supply_channel::text = 'Nieuws'::text AND a.title !~~ 'Wekdienst%'::text AND date(a.pub_date) = CURRENT_DATE AND (a.url::text ~~ 'https://rtlnieuws.nl/nieuws/%'::text AND a.url::text !~~ 'https://rtlnieuws.nl/nieuws/sport/%'::text OR a.url::text ~~ 'https://nos.nl%'::text OR a.url::text ~~ 'https://www.omroepbrabant.nl%'::text)
   ORDER BY a.pub_date DESC;
 
-ALTER TABLE public.rb_v_recent_articles
-    OWNER TO raspiblog;
-
--- View: public.rb_v_sport_articles
-
--- DROP VIEW public.rb_v_sport_articles;
-
 CREATE OR REPLACE VIEW public.rb_v_sport_articles
  AS
  SELECT a.id,
@@ -133,15 +122,8 @@ CREATE OR REPLACE VIEW public.rb_v_sport_articles
     r.start_datetime
    FROM rb_articles a
      JOIN rb_runs r ON a.run_id = r.id
-  WHERE (a.supply_channel::text = ANY (ARRAY['Voetbal'::character varying::text, 'Sport'::character varying::text, 'Wielrennen'::character varying::text, 'Schaatsen'::character varying::text])) AND date(a.pub_date) >= (CURRENT_DATE - 1) AND date(a.pub_date) <= CURRENT_DATE
+  WHERE (a.supply_channel::text = ANY (ARRAY['Voetbal'::character varying::text, 'Sport'::character varying::text, 'Wielrennen'::character varying::text, 'Schaatsen'::character varying::text])) AND date(a.pub_date) = CURRENT_DATE
   ORDER BY a.pub_date DESC;
-
-ALTER TABLE public.rb_v_sport_articles
-    OWNER TO raspiblog;
-
--- View: public.rb_v_entertainment_articles
-
--- DROP VIEW public.rb_v_entertainment_articles;
 
 CREATE OR REPLACE VIEW public.rb_v_entertainment_articles
  AS
@@ -154,12 +136,235 @@ CREATE OR REPLACE VIEW public.rb_v_entertainment_articles
     r.start_datetime
    FROM rb_articles a
      JOIN rb_runs r ON a.run_id = r.id
-  WHERE a.supply_channel::text = 'Entertainment'::text AND a.status IS NULL AND date(a.pub_date) >= (CURRENT_DATE - 1) AND date(a.pub_date) <= CURRENT_DATE
+  WHERE a.supply_channel::text = 'Entertainment'::text AND a.status IS NULL AND date(a.pub_date) = CURRENT_DATE
   ORDER BY a.pub_date DESC;
 
-ALTER TABLE public.rb_v_entertainment_articles
-    OWNER TO raspiblog;
+CREATE OR REPLACE VIEW public.rb_v_6_random_recent_articles
+ AS
+ WITH rtl AS (
+         SELECT rb_v_recent_articles.id,
+            rb_v_recent_articles.title AS label,
+            rb_v_recent_articles.url,
+            rb_v_recent_articles.text AS summary
+           FROM rb_v_recent_articles
+          WHERE rb_v_recent_articles.url::text ~~ 'https://rtlnieuws%'::text
+          ORDER BY (random())
+         LIMIT 2
+        ), nos AS (
+         SELECT rb_v_recent_articles.id,
+            rb_v_recent_articles.title AS label,
+            rb_v_recent_articles.url,
+            rb_v_recent_articles.text AS summary
+           FROM rb_v_recent_articles
+          WHERE rb_v_recent_articles.url::text ~~ 'https://nos.nl%'::text
+          ORDER BY (random())
+         LIMIT 2
+        ), omroepbrabant AS (
+         SELECT rb_v_recent_articles.id,
+            rb_v_recent_articles.title AS label,
+            rb_v_recent_articles.url,
+            rb_v_recent_articles.text AS summary
+           FROM rb_v_recent_articles
+          WHERE rb_v_recent_articles.url::text ~~ 'https://www.omroepbrabant.nl%'::text
+          ORDER BY (random())
+         LIMIT 2
+        ), combined AS (
+         SELECT rtl.id,
+            rtl.label,
+            rtl.url,
+            rtl.summary
+           FROM rtl
+        UNION ALL
+         SELECT nos.id,
+            nos.label,
+            nos.url,
+            nos.summary
+           FROM nos
+        UNION ALL
+         SELECT omroepbrabant.id,
+            omroepbrabant.label,
+            omroepbrabant.url,
+            omroepbrabant.summary
+           FROM omroepbrabant
+        ), extra AS (
+         SELECT rb_v_recent_articles.id,
+            rb_v_recent_articles.title AS label,
+            rb_v_recent_articles.url,
+            rb_v_recent_articles.text AS summary
+           FROM rb_v_recent_articles
+          ORDER BY (random())
+         LIMIT 6 - (( SELECT count(*) AS count
+                   FROM combined))
+        ), final_combined AS (
+         SELECT combined.id,
+            combined.label,
+            combined.url,
+            combined.summary
+           FROM combined
+        UNION ALL
+         SELECT extra.id,
+            extra.label,
+            extra.url,
+            extra.summary
+           FROM extra
+        )
+ SELECT id,
+    label,
+    url,
+    summary
+   FROM final_combined
+  ORDER BY (random())
+ LIMIT 6;
 
+CREATE OR REPLACE VIEW public.rb_v_6_random_sport_articles
+ AS
+ WITH rtl AS (
+         SELECT rb_v_sport_articles.id,
+            rb_v_sport_articles.title AS label,
+            rb_v_sport_articles.url,
+            rb_v_sport_articles.text AS summary
+           FROM rb_v_sport_articles
+          WHERE rb_v_sport_articles.url::text ~~ 'https://rtlnieuws%'::text
+          ORDER BY (random())
+         LIMIT 2
+        ), nos AS (
+         SELECT rb_v_sport_articles.id,
+            rb_v_sport_articles.title AS label,
+            rb_v_sport_articles.url,
+            rb_v_sport_articles.text AS summary
+           FROM rb_v_sport_articles
+          WHERE rb_v_sport_articles.url::text ~~ 'https://nos.nl%'::text
+          ORDER BY (random())
+         LIMIT 2
+        ), omroepbrabant AS (
+         SELECT rb_v_sport_articles.id,
+            rb_v_sport_articles.title AS label,
+            rb_v_sport_articles.url,
+            rb_v_sport_articles.text AS summary
+           FROM rb_v_sport_articles
+          WHERE rb_v_sport_articles.url::text ~~ 'https://www.omroepbrabant.nl%'::text
+          ORDER BY (random())
+         LIMIT 2
+        ), combined AS (
+         SELECT rtl.id,
+            rtl.label,
+            rtl.url,
+            rtl.summary
+           FROM rtl
+        UNION ALL
+         SELECT nos.id,
+            nos.label,
+            nos.url,
+            nos.summary
+           FROM nos
+        UNION ALL
+         SELECT omroepbrabant.id,
+            omroepbrabant.label,
+            omroepbrabant.url,
+            omroepbrabant.summary
+           FROM omroepbrabant
+        ), extra AS (
+         SELECT rb_v_sport_articles.id,
+            rb_v_sport_articles.title AS label,
+            rb_v_sport_articles.url,
+            rb_v_sport_articles.text AS summary
+           FROM rb_v_sport_articles
+          ORDER BY (random())
+         LIMIT 6 - (( SELECT count(*) AS count
+                   FROM combined))
+        ), final_combined AS (
+         SELECT combined.id,
+            combined.label,
+            combined.url,
+            combined.summary
+           FROM combined
+        UNION ALL
+         SELECT extra.id,
+            extra.label,
+            extra.url,
+            extra.summary
+           FROM extra
+        )
+ SELECT id,
+    label,
+    url,
+    summary
+   FROM final_combined
+  ORDER BY (random())
+ LIMIT 6;
+
+CREATE OR REPLACE VIEW public.rb_v_6_random_entertainment_articles
+ AS
+ WITH rtl AS (
+         SELECT rb_v_entertainment_articles.id,
+            rb_v_entertainment_articles.title AS label,
+            rb_v_entertainment_articles.url,
+            rb_v_entertainment_articles.text AS summary
+           FROM rb_v_entertainment_articles
+          WHERE rb_v_entertainment_articles.url::text ~~ 'https://rtlnieuws%'::text
+          ORDER BY (random())
+         LIMIT 3
+        ), nos AS (
+         SELECT rb_v_entertainment_articles.id,
+            rb_v_entertainment_articles.title AS label,
+            rb_v_entertainment_articles.url,
+            rb_v_entertainment_articles.text AS summary
+           FROM rb_v_entertainment_articles
+          WHERE rb_v_entertainment_articles.url::text ~~ 'https://nos.nl%'::text
+          ORDER BY (random())
+         LIMIT 3
+        ), combined AS (
+         SELECT rtl.id,
+            rtl.label,
+            rtl.url,
+            rtl.summary
+           FROM rtl
+        UNION ALL
+         SELECT nos.id,
+            nos.label,
+            nos.url,
+            nos.summary
+           FROM nos
+        ), extra AS (
+         SELECT rb_v_entertainment_articles.id,
+            rb_v_entertainment_articles.title AS label,
+            rb_v_entertainment_articles.url,
+            rb_v_entertainment_articles.text AS summary
+           FROM rb_v_entertainment_articles
+          ORDER BY (random())
+         LIMIT 6 - (( SELECT count(*) AS count
+                   FROM combined))
+        ), final_combined AS (
+         SELECT combined.id,
+            combined.label,
+            combined.url,
+            combined.summary
+           FROM combined
+        UNION ALL
+         SELECT extra.id,
+            extra.label,
+            extra.url,
+            extra.summary
+           FROM extra
+        )
+ SELECT id,
+    label,
+    url,
+    summary
+   FROM final_combined
+  ORDER BY (random())
+ LIMIT 6;
+
+CREATE OR REPLACE VIEW public.rb_v_duration
+ AS
+ SELECT action,
+    start_datetime,
+    end_datetime,
+    age(end_datetime, start_datetime) AS duration,
+    ai_provider
+   FROM rb_runs
+  WHERE action IS NOT NULL
+  ORDER BY start_datetime DESC;
 
 
 CREATE OR REPLACE FUNCTION set_supply_channel()
@@ -171,8 +376,6 @@ BEGIN
         NEW.supply_channel := 'Nieuws';
     ELSIF NEW.url LIKE 'https://rtlnieuws.nl/boulevard%' THEN
         NEW.supply_channel := 'Entertainment';
-    ELSIF NEW.url LIKE 'https://www.omroepbrabant.nl%' THEN
-        NEW.supply_channel := 'Nieuws';
     END IF;
 
     RETURN NEW;

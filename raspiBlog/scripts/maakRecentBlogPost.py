@@ -9,57 +9,32 @@ password = os.getenv("PGDB_PASSWORD")
 host = os.getenv("PGDB_HOST")
 port = os.getenv("PGDB_PORT", 5432)
 
-def update_run_status(run_id, AI_provider, action):
-    now = datetime.now()  # Correcte manier om de huidige tijd op te halen
-
-    try:
-        # Maak een databaseverbinding
-        with connect(database=database, user=username, password=password, host=host, port=port) as conn:
-            with conn.cursor() as cursor:
-                # Eerste update statement (voor rb_runs)
-                cursor.execute("""
-                    UPDATE rb_runs
-                    SET status = 'C', ai_provider = %s, end_datetime = %s, action = %s
-                    WHERE id = %s
-                """, (AI_provider, now, action, run_id))
-
-                # Tweede update statement (voor rb_articles)
-                cursor.execute("""
-                    UPDATE rb_articles
-                    SET status = 'V'
-                    WHERE id IN (
-                        SELECT id FROM rb_v_recent_articles
-                    );
-                """)
-
-                # Commit beide wijzigingen
-                conn.commit()
-                print("Statussen zijn succesvol bijgewerkt.")
-
-    except DatabaseError as e:
-        print(f"Er is een databasefout opgetreden: {e}")
-        sys.exit(1)
-
 def generate_summaries():
     try:
         with connect(database=database, user=username, password=password, host=host, port=port) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Stap 1: Haal de artikelen op
                 cursor.execute(
                     """
-                    SELECT title as label, url, text as summary
-                    FROM rb_v_recent_articles
-                    ORDER by RANDOM()
-                    LIMIT 6;
+                    SELECT id, label, url, summary
+                    FROM rb_v_6_random_recent_articles;
                     """
                 )
                 rows = cursor.fetchall()
 
+                # Stap 2: Verzamel de ID’s
+                ids = []
                 with open(SUMMARIES_FILE, 'w', encoding='utf-8') as file:
                     for row in rows:
                         url = row['url']
                         if '112-nieuws' in url:
                             print(f"URL met '112-nieuws' overgeslagen: {url}")
                             continue
+
+                        # Verzamel de geldige ID's voor de update
+                        ids.append(row['id'])
+
+                        # Schrijf de samenvatting naar het bestand
                         label = row['label']
                         summary = row['summary']
                         file.write(f"Label: {label}\n")
@@ -67,6 +42,22 @@ def generate_summaries():
                         file.write(f"Samenvatting: {summary}\n\n")
 
                 print(f"Samenvattingen zijn geschreven naar {SUMMARIES_FILE}.")
+
+                # Stap 3: Update de status als er ID's zijn
+                if ids:
+                    cursor.execute(
+                        """
+                        UPDATE rb_articles
+                        SET status = 'V'
+                        WHERE id = ANY(%s::UUID[]);
+                        """,
+                        (ids,)  # BELANGRIJK: Dit zorgt ervoor dat het als een tuple wordt geïnterpreteerd.
+                    )
+                    conn.commit()
+                    print(f"Status bijgewerkt naar 'V' voor {len(ids)} artikelen.")
+                else:
+                    print("Geen artikelen om bij te werken.")
+
     except Exception as e:
         print(f"Er is een fout opgetreden bij het genereren van de samenvattingen: {e}")
 
@@ -115,7 +106,7 @@ def main():
         file.write(blog_content)
     
     print(f"Blog content is geschreven naar '{BLOG_FILE}'")
-    update_run_status(runid, AI_provider, Path(sys.argv[0]).stem)
+    update_run_status(runid, AI_provider, 'C')
 
 if __name__ == "__main__":
     main()

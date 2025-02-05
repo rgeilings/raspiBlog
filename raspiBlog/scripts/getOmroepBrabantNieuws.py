@@ -143,7 +143,7 @@ def get_articles(article_url, publication_time, runid, delay=10):
         set_text(article_row, all_scraped_text)
         set_summary(article_row, summary)
         set_title(article_row, title)
-        supply_channel = ''
+        supply_channel = 'Nieuws'
         set_supply_channel(article_row, supply_channel)                          
         article_id = insert_article(article_row)
         clear_article_row(article_row)
@@ -169,7 +169,7 @@ def main():
     for article in sorted_articles:
         print(f"URL: {article['url']}, Tijd: {article['publication_time']}")
         get_articles(article['url'], article['publication_time'], runid)
-    update_run_status(runid)
+    update_run_status(runid, 'none', 'V')
 
 if __name__ == "__main__":
     main()

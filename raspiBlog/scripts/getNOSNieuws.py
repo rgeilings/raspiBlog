@@ -185,7 +185,7 @@ def main():
     for article in sorted_articles:
         print(f"URL: {article['url']}, Tijd: {article['publication_time']}")
         get_articles(article['url'], article['publication_time'], runid)
-    update_run_status(runid)
+    update_run_status(runid, 'none', 'V')
 
 if __name__ == "__main__":
     main()

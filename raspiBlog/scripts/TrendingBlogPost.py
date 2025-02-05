@@ -1,17 +1,5 @@
-import os
-import sys
-import base64
-import requests
-import markdown
-import random
-import subprocess
-import locale
-from datetime import datetime
-from openai import OpenAI
-from PIL import Image
-
-from dotenv import load_dotenv
-from pytrends.request import TrendReq
+from raspiBlogLib import * # Importeer alle functies uit raspiBlogLib
+#from pytrends.request import TrendReq
 
 # Laad omgevingsvariabelen uit .env bestand
 load_dotenv()
@@ -30,6 +18,25 @@ def run_scraper_and_generate_blog():
     print(result.stdout)
 
 def generate_ai_image(prompt):
+    try:
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            size="1792x1024",
+            quality="standard",
+            n=1,
+        )
+
+        image_url = response.data[0].url
+        return image_url
+    except Exception as e:
+        print(f"Error generating AI image: {e}")
+        # Gebruik fallback-afbeelding
+        fallback_url = "https://renegeilings.nl/wp-content/uploads/2025/01/temp_image-128.jpg"
+        return fallback_url
+
+def Agenerate_ai_image(prompt):
     try:
        client = OpenAI(api_key=OPENAI_API_KEY)
        response = client.images.generate(
@@ -130,7 +137,8 @@ def generate_title(NieuwsType):
 
 def main(NieuwsType):
     locale.setlocale(locale.LC_TIME, 'nl_NL.UTF-8')
-    #run_scraper_and_generate_blog()
+    start_datetime = datetime.now()
+    runid = add_new_row_rb_runs(start_datetime,'M', Path(sys.argv[0]).stem)
     
     # Lees de inhoud van BLOG_FILE
     with open(BLOG_FILE, 'r', encoding='utf-8') as file:
@@ -159,6 +167,7 @@ def main(NieuwsType):
       post_to_wordpress(title, html_content, image_url)
     else:
       print("BLOG_FILE is leeg")
+    update_run_status(runid, 'DALL-E3', 'C')
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
