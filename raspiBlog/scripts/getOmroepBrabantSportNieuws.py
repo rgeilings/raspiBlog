@@ -14,7 +14,9 @@ def parse_relative_time(time_str):
         return datetime(yesterday.year, yesterday.month, yesterday.day, now.hour, now.minute, now.second)
 
     # Controleer op 'Vandaag'
-    if 'Vandaag' in time_str:
+    if 'Vandaag' in time_str or 'vandaag' in time_str:
+        vandaag =  datetime(now.year, now.month, now.day, now.hour, now.minute, now.second)
+        print(f"########## vandaag: {vandaag}")
         return datetime(now.year, now.month, now.day, now.hour, now.minute, now.second)
 
     # Controleer op relatieve uren
@@ -39,10 +41,13 @@ def parse_relative_time(time_str):
     dagen = {
         "maandag": 0, "dinsdag": 1, "woensdag": 2, "donderdag": 3,
         "vrijdag": 4, "zaterdag": 5, "zondag": 6
+        #"maandag": 1, "dinsdag": 2, "woensdag": 3, "donderdag": 4,
+        #"vrijdag": 5, "zaterdag": 6, "zondag": 1
     }
     if time_str.lower() in dagen:
         # Bereken hoeveel dagen geleden het is
         vandaag = now.weekday()  # 0 = maandag, 6 = zondag
+        print(f"############# vandag:{vandaag}")
         target_dag = dagen[time_str.lower()]
         dagen_verschil = (vandaag - target_dag) % 7
         if dagen_verschil == 0:  # Vandaag
@@ -73,6 +78,7 @@ def extract_article_data(url):
                     print(f"article_url already exists in database: {article_url}")
                     continue  # Ga naar de volgende URL als deze al bestaat
                 time_tag = link.find_next('div', class_='article-teaser_time__SPLIi')
+                print(f"############### time_tag:{time_tag}")
                 publication_time = time_tag.text.strip() if time_tag else 'Onbekend'
                 publication_time_parsed = parse_relative_time(publication_time)
                 articles.append({

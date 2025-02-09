@@ -1,17 +1,5 @@
 from raspiBlogLib import * # Importeer alle functies uit raspiBlogLib
 
-# Laad omgevingsvariabelen uit .env bestand
-load_dotenv()
-
-WORDPRESS_USER = os.getenv('WORDPRESS_USER')
-WORDPRESS_APP_PASSWORD = os.getenv('WORDPRESS_APP_PASSWORD')
-WP_BASE = os.getenv('WP_BASE')
-BLOG_FILE = os.getenv('BLOG_FILE', '/app/blog_post.txt')
-BLOG_IMG = os.getenv('BLOG_IMG', '/app/temp_image.jpg')
-DALLE3_PROMPT = os.getenv('DALLE3_PROMPT', '/app/dall-e_3_prompt.txt')
-UNSPLASH_ACCESS_KEY = os.getenv('UNSPLASH_ACCESS_KEY')
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-
 def generate_ai_image(prompt):
     try:
         client = OpenAI(api_key=OPENAI_API_KEY)
@@ -37,7 +25,7 @@ def download_and_resize_image(url, filename):
         # Genereer de bestandsnaam met de huidige datum en tijd
         now = datetime.now()
         filename = now.strftime("temp_image_%Y%m%d_%H%M%S.jpg")
-        
+
         # Sla de originele afbeelding op met de gegenereerde bestandsnaam
         with open(filename, 'wb') as f:
             f.write(response.content)
@@ -77,14 +65,14 @@ def post_to_wordpress(title, content, image_url):
     post_url = f"{WP_BASE}/wp-json/wp/v2/posts"
 
     try:
-        filename= BLOG_IMG 
+        filename= BLOG_IMG
         download_and_resize_image(image_url, filename)
         print(f"filename:{filename}")
         media_id = upload_image_to_wordpress(filename)
     except Exception as e:
         print(f"Failed to upload image: {e}")
         media_id = None
-
+        
     post_data = {
         "title": title,
         "content": content,
@@ -115,43 +103,79 @@ def generate_title(NieuwsType):
 
 def main(NieuwsType):
     locale.setlocale(locale.LC_TIME, 'nl_NL.UTF-8')
+    # Mapping van NieuwsType naar view_names
+    view_mapping = {
+        "Recent": "rb_v_6_random_recent_articles",
+        "Sport": "rb_v_6_random_sport_articles",
+        "Entertainment": "rb_v_6_random_entertainment_articles"
+    }
+
+    # Controleer of het opgegeven NieuwsType geldig is
+    if NieuwsType not in view_mapping:
+        print(f"Fout: Ongeldige NieuwsType '{NieuwsType}'. Kies uit: {list(view_mapping.keys())}")
+        return
+
+    view_name = view_mapping[NieuwsType]  # Koppel de juiste view aan NieuwsType
+    print(f"View geselecteerd op basis van NieuwsType '{NieuwsType}': {view_name}")
+
     start_datetime = datetime.now()
-    runid = add_new_row_rb_runs(start_datetime,'M', Path(sys.argv[0]).stem)
+
+    script_name = Path(__file__).stem  # Haalt de naam van het script op zonder .py-extensie
+    #  Dynamisch runid genereren met NieuwsType in de bestandsnaam
+    runid = add_new_row_rb_runs(datetime.now(), 'M', f"{script_name}_{NieuwsType.lower()}")  
+
+    # Bestandsnamen
+    files_to_delete = [DALLE3_PROMPT, BLOG_FILE, SUMMARIES_FILE]
+
+    # Verwijder de bestanden
+    for file in files_to_delete:
+       if os.path.exists(file):
+           os.remove(file)
+           print(f"{file} is verwijderd.")
+       else:
+           print(f"{file} bestaat niet.")
+
+    generate_summaries(view_name)
+    summaries = read_summaries(SUMMARIES_FILE)
+    blog_content, AI_provider = maak_blogPost(summaries)
+
+    # schrijf blog_content naar file voor debuggen
+    with open(BLOG_FILE, 'w', encoding='utf-8') as file:
+        file.write(blog_content)
+
+    print(f"Blog content is geschreven naar '{BLOG_FILE}'")
     
-    # Lees de inhoud van BLOG_FILE
-    with open(BLOG_FILE, 'r', encoding='utf-8') as file:
-        content = file.read()
-    
-    # controleer of het bestand niet leeg is
+    #controleer of het bestand niet leeg is
     if os.path.getsize(BLOG_FILE) != 0:
       # Lees de inhoud van DALLE3_PROMPT
       with open(DALLE3_PROMPT, 'r', encoding='utf-8') as dalle_prompt:
-          dall_e_prompt = dalle_prompt.read()
+          ai_image_prompt = dalle_prompt.read()
 
-      ai_image_prompt =  f"Gebruik de samenvatting van blogpost als inspiratie voor een afbeelding. Vervang eventuele namen in samenvatting door een beschrijving van soortgelijke personen:{dall_e_prompt}" 
-      print(f"ai_image_prompt: {ai_image_prompt}")
       image_url = generate_ai_image(ai_image_prompt)
+
       if image_url:
            print(f"AI gegenereerde foto URL: {image_url}")
       else:
-          print("Er is een fout opgetreden bij het genereren van een AI-afbeelding.")    
-
+          print("Er is een fout opgetreden bij het genereren van een AI-afbeelding.")
+      
       title = generate_title(NieuwsType)
-
+     
       # Converteer de gegenereerde Markdown content naar HTML
-      html_content = markdown.markdown(content)
+      html_content = markdown.markdown(blog_content)
 
-      # Plaats de inhoud naar WordPress  
+      # Plaats de inhoud naar WordPress
       post_to_wordpress(title, html_content, image_url)
     else:
       print("BLOG_FILE is leeg")
-    update_run_status(runid, 'DALL-E3', 'C')
+
+    update_run_status(runid, AI_provider, 'C')
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Geen parameter meegegeven, dus geen Brabants Nieuws.")
-        NieuwsType='LEEG'
+        print("Geen parameter meegegeven, Recent Nieuws gekozen.")
+        NieuwsType='Recent'
     else:
         NieuwsType = sys.argv[1]
 
     main(NieuwsType)
+
