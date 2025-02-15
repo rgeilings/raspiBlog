@@ -27,6 +27,13 @@ load_dotenv()
 
 WORDPRESS_USER = os.getenv('WORDPRESS_USER')
 WORDPRESS_APP_PASSWORD = os.getenv('WORDPRESS_APP_PASSWORD')
+# WP users
+WPQWEN_USER = os.getenv('WPQWEN_USER')
+WPQWEN_APP_PASSWORD = os.getenv('WPQWEN_APP_PASSWORD')
+WPDEEPSEEK_USER = os.getenv('WPDEEPSEEK_USER')
+WPDEEPSEEK_APP_PASSWORD = os.getenv('WPDEEPSEEK_APP_PASSWORD')
+WPOPENAI_USER = os.getenv('WPOPENAI_USER')
+WPOPENAI_APP_PASSWORD = os.getenv('WPOPENAI_APP_PASSWORD')
 WP_BASE = os.getenv('WP_BASE')
 BLOG_FILE = os.getenv('BLOG_FILE', '/app/blog_post.txt')
 BLOG_IMG = os.getenv('BLOG_IMG', '/app/temp_image.jpg')
@@ -45,6 +52,10 @@ DEEPSEEK_MODEL = os.getenv('DEEPSEEK_MODEL')
 QWEN_API_KEY = os.getenv('QWEN_API_KEY')
 QWEN_API_URL = os.getenv('QWEN_API_URL')
 QWEN_MODEL = os.getenv('QWEN_MODEL')
+# OpenRouter
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
+OPENROUTER_API_URL = os.getenv('OPENROUTER_API_URL')
+OPENROUTER_MODEL = os.getenv('OPENROUTER_MODEL')
 
 database = os.getenv("PGDB_NAME")
 username = os.getenv("PGDB_USER")
@@ -167,7 +178,6 @@ def generate_blog_content_per_topic(topic, articles, client, model):
     prompt = f"Maak een blogpost op basis van de volgende samenvattingen voor het onderwerp '{topic}'. Voeg headers en opmaak toe,\n"
     prompt += "maar verzin geen extra inhoud. Voeg onderaan elk artikel een 'Bekijk origineel artikel'-link toe in HTML, zodat de link opent in een nieuwe tab.\n"
     prompt += "Herschrijf de samenvatting naar een informele stijl. Zorg ervoor dat er geen plagiaat veroorzaakt wordt.Als je een datum wil gebruiken,\n"
-    #prompt += f"zorg er dan voor dat alle relatieve datums (zoals 'gisteren', 'eergisteren', 'volgende week', etc.) worden omgezet naar absolute datums gerelateerd aan vandaag ({today}).\n"
     prompt += "zorg er dan voor dat alle relatieve datums (zoals 'gisteren', 'eergisteren', 'volgende week', etc.) NIET worden omgezet naar absolute datums.\n"
     prompt += "Herschrijf {topic} in eigen woorden, zodat het bij het artikel past. Het herschreven topic moet wel Nederlandstalig zijn. Gebruik de volgende structuur:\n"
     prompt += f"\n## Onderwerp van artikel\n"

@@ -60,7 +60,65 @@ def upload_image_to_wordpress(filename):
     media_id = media_response.json()['id']
     return media_id
 
-def post_to_wordpress(title, content, image_url):
+def post_to_wordpress(AI_provider, title, content, image_url):
+    # Selecteer de juiste WordPress-gebruiker en -applicatie-wachtwoord op basis van AI_provider
+    if AI_provider == "Qwen":
+        WORDPRESS_USER = WPQWEN_USER
+        WORDPRESS_APP_PASSWORD = WPQWEN_APP_PASSWORD
+    elif AI_provider == "DeepSeek":
+        WORDPRESS_USER = WPDEEPSEEK_USER
+        WORDPRESS_APP_PASSWORD = WPDEEPSEEK_APP_PASSWORD
+    elif AI_provider == "OpenAI":
+        WORDPRESS_USER = WPOPENAI_USER
+        WORDPRESS_APP_PASSWORD = WPOPENAI_APP_PASSWORD
+    else:
+        raise ValueError(f"Ongeldige AI_provider: {AI_provider}. Kies uit 'Qwen', 'DeepSeek' of 'OpenAI'.")
+
+    # Maak de authenticatie-string
+    auth = base64.b64encode(f"{WORDPRESS_USER}:{WORDPRESS_APP_PASSWORD}".encode()).decode()
+
+    # Post-URL voor de WordPress REST API
+    post_url = f"{WP_BASE}/wp-json/wp/v2/posts"
+
+    try:
+        # Download en resize het afbeeldingsbestand
+        filename = BLOG_IMG
+        download_and_resize_image(image_url, filename)
+        print(f"filename: {filename}")
+        media_id = upload_image_to_wordpress(filename)
+    except Exception as e:
+        print(f"Failed to upload image: {e}")
+        media_id = None
+
+    # Post-data voor het artikel
+    post_data = {
+        "title": title,
+        "content": content,
+        "status": "publish",
+        "categories": [2],  # Voeg hier de categorie-ID toe
+        "tags": [],  # Voeg hier de tag-ID's toe
+    }
+
+    # Voeg featured_media toe als er een media_id is
+    if media_id:
+        post_data["featured_media"] = media_id
+
+    # Headers voor de API-aanvraag
+    headers = {
+        "Authorization": f"Basic {auth}",
+        "Content-Type": "application/json"
+    }
+
+    # Verstuur de POST-aanvraag naar de WordPress-API
+    post_response = requests.post(post_url, json=post_data, headers=headers)
+
+    # Controleer of de post succesvol is gemaakt
+    if post_response.status_code != 201:
+        raise Exception(f"Error creating post: {post_response.status_code}, {post_response.text}")
+
+    print(f"Post successfully created with AI_provider: {AI_provider}")
+
+def Apost_to_wordpress(AI_provider, title, content, image_url):
     auth = base64.b64encode(f"{WORDPRESS_USER}:{WORDPRESS_APP_PASSWORD}".encode()).decode()
     post_url = f"{WP_BASE}/wp-json/wp/v2/posts"
 
@@ -164,7 +222,7 @@ def main(NieuwsType):
       html_content = markdown.markdown(blog_content)
 
       # Plaats de inhoud naar WordPress
-      post_to_wordpress(title, html_content, image_url)
+      post_to_wordpress(AI_provider, title, html_content, image_url)
     else:
       print("BLOG_FILE is leeg")
 
