@@ -75,18 +75,22 @@ def get_supply_channel_name(url):
 
 def extract_article_data(base_url):
     response = requests.get(base_url)
+    print(f"response.status_code: {response.status_code}")
 
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         articles = []
 
-        pattern = re.compile(r"^/artikel/\d+-laatste-nieuws$")
+        #pattern = re.compile(r"^/artikel/\d+-laatste-nieuws$")
+        pattern = re.compile(r"^/artikel/\d+-[a-z0-9\-]+$")
+        print(f"patern:{pattern}")
 
         for element in soup.find_all('a', href=True):
             href = element['href']
+            print(f"href: {href}")
             if pattern.match(href):
                 article_url = f"{base_url.rstrip('/')}{href}"
-
+                print(f"article_url: {article_url}")
                 # Controleer of de URL al bestaat (eventueel met een functie zoals url_exists)
                 if url_exists(article_url):
                     print(f"article_url already exists in database: {article_url}")
