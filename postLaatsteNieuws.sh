@@ -7,6 +7,5 @@ INTERVAL=$((RANDOM % 180))
 sleep "$INTERVAL"
 
 echo "Slept for $INTERVAL seconds."
-docker exec  raspiblog_python_1 python /scripts/maakRecentBlogPost.py >> LaatsteNieuwsBlog.log
-docker exec  raspiblog_python_1 python /scripts/TrendingBlogPost.py Actueel >> LaatsteNieuwsBlog.log
+docker exec  raspiblog_python_1 python /scripts/maakBlogPost.py Actueel >> LaatsteNieuwsBlog.log
 /usr/bin/mv /home/rene/LaatsteNieuwsBlog.log /DockerApps/raspiBlog/log/ActueelNieuwsBlog_$(date +'%Y%m%d_%H%M%S').log

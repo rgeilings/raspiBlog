@@ -19,9 +19,9 @@ docker exec  raspiblog_python_1 python /scripts/getNOSNieuws.py  >> LaatsteNieuw
 INTERVAL=$((RANDOM % 120))
 sleep "$INTERVAL"
 echo "Slept fourh time: $INTERVAL seconds."
-docker exec  raspiblog_python_1 python /scripts/getOmroepBrabantSportNieuws.py  >> LaatsteNieuwsBlog.log
+docker exec  raspiblog_python_1 python /scripts/getOmroepBrabantieuws.py Sport  >> LaatsteNieuwsBlog.log
 INTERVAL=$((RANDOM % 120))
 sleep "$INTERVAL"
 echo "Slept fifth time: $INTERVAL seconds."
-docker exec  raspiblog_python_1 python /scripts/getOmroepBrabantNieuws.py  >> LaatsteNieuwsBlog.log
+docker exec  raspiblog_python_1 python /scripts/getOmroepBrabantNieuws.py Nieuws >> LaatsteNieuwsBlog.log
 /usr/bin/mv /home/rene/LaatsteNieuwsBlog.log /DockerApps/raspiBlog/log/getNieuwsBlog_$(date +'%Y%m%d_%H%M%S').log
