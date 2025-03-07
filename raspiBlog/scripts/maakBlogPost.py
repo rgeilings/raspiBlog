@@ -2,8 +2,8 @@ from raspiBlogLib import * # Importeer alle functies uit raspiBlogLib
 import base64
 
 # URL's voor GET en POST requests
-get_url = "http://192.168.178.76:7860/sdapi/v1/options"
-post_url = "http://192.168.178.76:7860/sdapi/v1/options"
+get_url = f"{FORGE_API_URL}/sdapi/v1/options"
+post_url = f"{FORGE_API_URL}/sdapi/v1/options"
 
 # Vooraf gekozen options
 chosen_options = {
