@@ -67,7 +67,7 @@ This project is licensed under the MIT License.
 ## Acknowledgments
 
 - AI content generation powered by OpenAI
-- Image generation powered by DALL-E 3
+- Image generation powered by flux1-schnell
 - Hosted on a Raspberry Pi with Docker and Docker-compose
 
 ---
