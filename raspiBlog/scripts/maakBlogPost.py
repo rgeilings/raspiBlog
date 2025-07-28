@@ -478,6 +478,9 @@ def post_to_wordpress(AI_provider, title, content, filename):
     elif AI_provider == "DeepSeek":
         WORDPRESS_USER = WPDEEPSEEK_USER
         WORDPRESS_APP_PASSWORD = WPDEEPSEEK_APP_PASSWORD
+    elif AI_provider == "OpenRouter":
+        WORDPRESS_USER = WPOPENROUTER_USER
+        WORDPRESS_APP_PASSWORD = WPOPENROUTER_APP_PASSWORD
     elif AI_provider == "OpenAI":
         WORDPRESS_USER = WPOPENAI_USER
         WORDPRESS_APP_PASSWORD = WPOPENAI_APP_PASSWORD

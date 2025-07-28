@@ -21,6 +21,7 @@ import requests
 import subprocess
 import sys
 import time
+import base64
 
 # Laad omgevingsvariabelen uit .env bestand
 load_dotenv()
@@ -32,6 +33,8 @@ WPQWEN_USER = os.getenv('WPQWEN_USER')
 WPQWEN_APP_PASSWORD = os.getenv('WPQWEN_APP_PASSWORD')
 WPDEEPSEEK_USER = os.getenv('WPDEEPSEEK_USER')
 WPDEEPSEEK_APP_PASSWORD = os.getenv('WPDEEPSEEK_APP_PASSWORD')
+WPOPENROUTER_USER = os.getenv('WPOPENROUTER_USER')
+WPOPENROUTER_APP_PASSWORD = os.getenv('WPOPENROUTER_APP_PASSWORD')
 WPOPENAI_USER = os.getenv('WPOPENAI_USER')
 WPOPENAI_APP_PASSWORD = os.getenv('WPOPENAI_APP_PASSWORD')
 WP_BASE = os.getenv('WP_BASE')
@@ -118,7 +121,7 @@ def maak_DALLE3_PROMPT(client, blog_text, model):
       "Maak een gedetailleerde Stable Diffusion prompt in het Engels gebaseerd op de volgende tekst. "
       "Begin de prompt ALTIJD met de tekst:Create a highly detailed, digital painting of "
       "Kies 1 van de onderwerpen en zorg dat de prompt een plaatje genereert wat de strekking van artikel weerspiegelt. "
-      "Zorg ervoor dat de prompt de regels van OpenAI met betrekking tot genereren van images niet overtreedt."
+      "/genereer zo min mogelijk tekst op het gegeneerde plaatje ndien noodzakelijk dan zoveel mogelijk Nederlandstalig."
       "Lever uitsluitend de gegenereerde prompt aan, zonder verdere uitleg of extra tekst. Tekst:\n"
       f"{blog_text}"
     )
@@ -221,8 +224,69 @@ def update_run_status(run_id, AI_provider, status):
     except Exception as e:
         print(f"Er is een fout opgetreden bij het bijwerken van de run-status: {e}")
         sys.exit(1)
+import random
 
 def maak_blogPost(summaries):
+    # Providers en hun API-gegevens
+    client_providers = {
+        "DeepSeek": (DEEPSEEK_API_KEY, DEEPSEEK_API_URL, DEEPSEEK_MODEL),
+        "Qwen": (QWEN_API_KEY, QWEN_API_URL, QWEN_MODEL),
+        "OpenRouter": (OPENROUTER_API_KEY, OPENROUTER_API_URL, OPENROUTER_MODEL),
+        "OpenAI": (OPENAI_API_KEY, OPENAI_API_URL, OPENAI_MODEL)
+    }
+    
+    # Random kiezen tussen DeepSeek en Qwen
+    primary_providers = ["DeepSeek", "Qwen","OpenRouter"]
+    #primary_providers = ["OpenRouter","OpenRouter"]
+    random.shuffle(primary_providers)
+
+    blog_content = None  # Initialiseer als None
+    AI_provider = None   # Initialiseer als None voor het geval alle providers falen
+
+    for provider in primary_providers:
+        api_key, base_url, model = client_providers[provider]
+        try:
+            AI_provider = provider
+            print(f"Using {provider} ({model}) with base_url {base_url}")
+
+            client = OpenAI(api_key=api_key, base_url=base_url)
+            blog_content = generate_blog_content(client, summaries, model)
+            print(f"blog_content: {blog_content}")
+
+            ai_prompt = maak_DALLE3_PROMPT(client, blog_content, model)
+            print(f"{provider} ai_prompt: {ai_prompt}")
+
+            with open(DALLE3_PROMPT, 'w', encoding='utf-8') as file:
+                file.write(ai_prompt)
+
+            break  # Stop als een provider succesvol is
+        except Exception as e:
+            print(f"Error using {provider}: {e}")
+            print(f"{provider} failed, trying the next provider...")
+    
+    # Als beide primary providers falen, probeer OpenAI
+    if blog_content is None:
+        try:
+            AI_provider = "OpenAI"
+            api_key, base_url, model = client_providers[AI_provider]
+            print(f"Using OpenAI ({model}) with base_url {base_url}")
+
+            client = OpenAI(api_key=api_key, base_url=base_url)
+            blog_content = generate_blog_content(client, summaries, model)
+            print(f"blog_content: {blog_content}")
+
+            ai_prompt = maak_DALLE3_PROMPT(client, blog_content, model)
+            print(f"OpenAI ai_prompt: {ai_prompt}")
+
+            with open(DALLE3_PROMPT, 'w', encoding='utf-8') as file:
+                file.write(ai_prompt)
+        except Exception as e:
+            print(f"Error using OpenAI: {e}")
+            print("All providers failed.")
+
+    return blog_content, AI_provider
+
+def OUDmaak_blogPost(summaries):
     # Volgorde voor het genereren van blogPost: Eerst Deepseek, als dat niet luke Qwen en als dat ook niet lukt OpenAI
     #
     client_providers = [
@@ -308,23 +372,6 @@ def generate_summaries(view_name):
 
     except Exception as e:
         print(f" Fout bij het ophalen van artikelen uit 'public.{view_name}': {e}")
-
-def OUDupload_image_to_wordpress(filename):
-    auth = base64.b64encode(f"{WORDPRESS_USER}:{WORDPRESS_APP_PASSWORD}".encode()).decode()
-    media_url =  f"{WP_BASE}/wp-json/wp/v2/media"
-
-    headers = {
-        "Authorization": f"Basic {auth}",
-        "Content-Disposition": f'attachment; filename="{filename}"'
-    }
-
-    with open(filename, 'rb') as file:
-        media_response = requests.post(media_url, headers=headers, files={'file': file})
-    if media_response.status_code != 201:
-        raise Exception(f"Error uploading image: {media_response.status_code}, {media_response.text}")
-
-    media_id = media_response.json()['id']
-    return media_id
 
 def upload_image_to_wordpress(filename):
     auth = base64.b64encode(f"{WORDPRESS_USER}:{WORDPRESS_APP_PASSWORD}".encode()).decode()
