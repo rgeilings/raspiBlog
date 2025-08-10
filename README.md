@@ -25,7 +25,7 @@ For each latest news, sports news and entertainment news, the AI bot reads these
 Several times a day, the AI bot choose random 6 articles for latest news, sports news or entertainment news and write a summary for thes 6 articles.
 
 ### Step 4: Create AI Image
-From this summary, the AI bot creates a DALL-E3 prompt to generate a image which reflects the summary. This way, there's always something nice to accompany the article.
+From this summary, the AI bot creates a Flux.1 prompt to generate a image which reflects the summary. This way, there's always something nice to accompany the article.
 
 ### Step 5: Create Blogpost
 With the summary and the image, the AI bot creates a complete blog post. This piece is then ready for publication.
